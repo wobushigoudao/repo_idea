@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lagou.dao.PromotionAdMapper">
+
+
+    <resultMap id="ad_space" type="PromotionAd">
+
+        <id property="id" column="id"></id>
+        <result property="name" column="name"></result>
+        <result property="spaceId" column="spaceId"></result>
+        <result property="keyword" column="keyword"></result>
+        <result property="htmlContent" column="htmlContent"></result>
+        <result property="text" column="text"></result>
+        <result property="link" column="link"></result>
+        <result property="startTime" column="startTime"></result>
+        <result property="endTime" column="endTime"></result>
+        <result property="createTime" column="createTime"></result>
+        <result property="updateTime" column="updateTime"></result>
+        <result property="status" column="status"></result>
+        <result property="priority" column="priority"></result>
+        <result property="img" column="img"></result>
+
+        <association property="promotionSpace" javaType="PromotionSpace"
+                     select="com.lagou.dao.PromotionSpaceMapper.findPromotionSpaceById"
+                     column="spaceId">
+        </association>
+        <!--我们查询的数据，若使用指定，那么当操作类里面的对象时，就需要标签来指定了，而这里则使用默认指定-->
+    </resultMap>
+
+    <!--分页查询广告信息-->
+    <!--注意：可能类里面有设置了关系的变量，但表未必一定会设置，如外键和主键（一般都会设置主键）-->
+
+    <select id="findAllPromotionAdByPage" resultMap="ad_space">
+        select * from promotion_ad
+    </select>
+    <!--
+    注意：配置文件最好放在资源文件夹里，虽然最终的结果是放在项目下，但识别时，只会在资源文件夹里识别
+    也就是说，虽然src与resources在路径的最终存放一样，但是将对应配置文件放在src里面
+    maven不会去src识别，而是去resources识别，所有配置文件最好是在resources文件夹里面
+    这是使用maven需要注意的地方，其他的不要maven的，一般不会这样
+    因为他们是直接编写到最终路径的，而没有识别操作
+    -->
+
+
+    <!--添加广告-->
+
+    <insert id="savePromotionAd" parameterType="PromotionAd">
+        INSERT INTO promotion_ad
+        VALUES(NULL,#{name},#{spaceId},#{keyword},
+         #{htmlContent},#{text},#{link},#{startTime},#{endTime},#{createTime},
+         #{updateTime},#{status},#{priority},#{img});
+
+    </insert>
+
+    <!--根据id查询广告-->
+    <select id="findPromotionAdById" resultType="PromotionAd">
+            select * from promotion_ad where id=#{id}
+    </select>
+
+    <!--修改广告-->
+    <update id="updatePromotionAd" parameterType="PromotionAd">
+        update promotion_ad
+           <trim prefix="SET" suffixOverrides=",">
+             <if test="name != null and name != ''">
+               name = #{name},
+             </if>
+             <if test="spaceId != null and spaceId != ''">
+               spaceId = #{spaceId},
+             </if>
+             <if test="link != null">
+               link=#{link},
+             </if>
+             <if test="status != null and status != '' or status == 0">
+            <!--这里说明一下，为什么对应整型可以判断''，这是因为替换之前，会将对应信息变成字符串
+        所以无论对应类型是什么，都是字符串之间的值比较-->
+               status=#{status},
+             </if>
+             <if test="img != null">
+               img=#{img},
+             </if>
+             <if test="text != null">
+               text=#{text},
+             </if>
+             <if test="startTime != null">
+               startTime=#{startTime},
+             </if>
+             <if test="endTime != null">
+               endTime=#{endTime},
+             </if>
+             <if test="updateTime != null">
+               updateTime=#{updateTime},
+             </if>
+           </trim>
+           <where>
+             <if test="id != null and id != '' ">id = #{id}</if>
+           </where>
+
+    </update>
+    
+    
+    <!--广告动态上下线-->
+    
+    <update id="updatePromotionAdStatus" parameterType="PromotionAd">
+        update promotion_ad set status = #{status},updateTime = #{updateTime} where id = #{id}
+    </update>
+</mapper>

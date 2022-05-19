@@ -1,0 +1,35 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!--1.组件扫描：只扫描controller-->
+<context:component-scan base-package="com.lagou.controller"></context:component-scan>
+<!--
+在这里说明一下，前面说过，前端控制器，只操作自身的容器
+那么实际上spring和springmvc的扫描是可以重复的，而不会出现注入冲突
+但是也为了空间，所以一般最好扫描到合适的位置，而不扫描不需要的实例
+-->
+
+    <!--注解增强：使得@ResponseBody可以被json操作，即使用这个操作-->
+    <mvc:annotation-driven></mvc:annotation-driven>
+
+    <!--视图解析器，现在不进行配置-->
+
+    <!--静态资源放行-->
+    <mvc:default-servlet-handler></mvc:default-servlet-handler>
+
+
+    <!--配置文件解析器-->
+    <!-- 此处id为固定写法，不能随便取名-->
+    <bean id="multipartResolver"
+          class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <property name="maxUploadSize" value="1048576"></property>
+    </bean>
+</beans>

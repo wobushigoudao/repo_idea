@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.lagou.dao.UserMapper">
+    <!--用户分页及其多条件组合查询-->
+    <select id="findAllUserByPage" parameterType="UserVo" resultType="User">
+        select * from user
+        <where>
+            <if test="true">
+                and is_del !=1
+            </if>
+            <if test="username !=null and username != ''">
+                <!--
+                由于字符串会识别''进行操作，而不是字符串的识别''时，一般就是默认
+                所以字符串通常需要判断''，其他类型的一般不需要
+                -->
+                and name = #{username}
+            </if>
+            <if test="startCreateTime !=null and endCreateTime != null">
+                and create_time between #{startCreateTime} and #{endCreateTime}
+            </if>
+        </where>
+    </select>
+
+    <!--用户状态设置-->
+    <update id="updateUserStatus" parameterType="User">
+        update user
+        set status      = #{status},
+            update_time = #{update_time}
+        where id = #{id}
+    </update>
+
+    <!--根据用户名查询用户信息，用户名基本是不能一致的-->
+    <select id="login" parameterType="User" resultType="User">
+        select *
+        from user
+        where phone = #{phone}
+    </select>
+
+
+    <!--根据用户id查询关联的角色信息-->
+    <!--parameterType可以省略的，只是让你知道他的参数是什么，实际上并没有起到作用-->
+    <select id="findUserRelationRoleById" parameterType="Integer" resultType="Role">
+        SELECT *
+        FROM roles r
+                 INNER JOIN user_role_relation ul ON r.id = ul.role_id
+        WHERE ul.user_id = #{userid}
+    </select>
+
+    <!--根据用户id清空中间表的对应关联关系-->
+    <select id="deleteUserContextRole" parameterType="int">
+        delete
+        from user_role_relation
+        where user_id = #{userid}
+    </select>
+
+    <!--分配角色（即添加对应用户和角色的关联关系）-->
+    <insert id="userContextRole" parameterType="User_Role_relation">
+        insert into user_role_relation
+        values (null, #{userId}, #{roleId},
+                #{createdTime}, #{updatedTime}, #{createdBy}, #{updatedBy})
+    </insert>
+
+    <!--根据角色id，查询角色所拥有的顶级菜单（-1），由于角色不止一个，所以参数是list集合
+    角色对应了多个菜单-->
+    <!--List集合在Mybatis中也有默认的别名，如list（别名忽略大小写）-->
+    <select id="findParentMenuByRoleId" parameterType="list" resultType="Menu">
+        SELECT DISTINCT m.*
+        FROM roles r
+        INNER JOIN role_menu_relation rl ON r.id = rl.role_id
+        INNER JOIN menu m ON m.id = rl.menu_id
+        WHERE m.parent_id = -1 AND r.id IN
+        <foreach collection="list" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        <!--
+           collection : 代表要遍历的集合元素，通常写collection或者list
+           而之所以可以使用collection，是因为多态
+           其他也可以，具体看百度，如array使用数组
+           open : 代表语句的开始部分
+           close : 代表语句的结束部分
+           item : 代表遍历结合中的每个元素，生成的变量名，使用的#{}或者${}替换必须与这个名称一样，否则报错
+           separator: 分隔符
+                     -->
+
+        <!--
+        根据条件得到对应菜单的信息，然后对-1操作，得到的是父菜单信息，最后进行in操作（用户对应的所有角色id）
+        使得角色的权限合并，然后去重，使得出现了这个用户的所有权限
+        至于为什么说合并，举个例子：因为用户管理员和超级管理员都有用户的权限
+        那么不可能出现两个对应权限的父菜单（用户管理）吧，所以就进行去重，因为我们只需要一个对应的父菜单
+        -->
+    </select>
+
+    <!--根据Pid（父菜单id），查询子菜单信息-->
+    <select id="findSubMenuByPid" parameterType="int" resultType="Menu">
+        SELECT * FROM menu m WHERE m.parent_id = #{pid};
+        <!--得到了对应父菜单的信息，那么就可以通过父菜单的id得到对应子菜单-->
+    </select>
+
+    <!--获取用户拥有的资源信息（实际上就是获取角色拥有的资源信息，但因为关联，所以也可说明是用户拥有）-->
+    <select id="findResponseByRoleId" parameterType="list" resultType="Resource">
+        SELECT DISTINCT rs.* FROM roles r INNER JOIN role_resource_relation rr ON r.id = rr.role_id
+        INNER JOIN resource rs ON rs.id = rr.resource_id
+        WHERE r.id IN
+        <foreach collection="list" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
+    <!--先查询对应角色的资源信息，但角色有很多个，需要合并对应的资源权限-->
+</mapper>

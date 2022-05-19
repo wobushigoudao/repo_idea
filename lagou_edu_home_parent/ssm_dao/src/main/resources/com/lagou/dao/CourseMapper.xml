@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lagou.dao.CourseMapper">
+
+    <select id="findCourseByCondition" parameterType="CourseVo" resultType="Course">
+        select * from course
+
+        <where>
+            <!--and相当于java里的&&，会被解析成&&的-->
+            <!--前面说过，一般返回是null，""会被处理，而这里就由我们自己处理了（没有使用代码处理了）-->
+            <if test="courseName !=null and courseName!=''">
+                and course_name like '%${courseName}%'
+            </if>
+            <if test="status !=null and status!=''">
+                and status = #{status}
+            </if>
+            <if test="true">
+                and is_Del != 1
+            </if>
+        </where>
+    </select>
+
+    <!--新增课程信息-->
+    <insert id="saveCourse" parameterType="Course">
+        INSERT INTO course(
+        course_name,
+        brief,
+        preview_first_field,
+        preview_second_field,
+        course_img_url,
+        course_list_img,
+        sort_num,
+        price,
+        discounts,
+        sales,
+        discounts_tag,
+        course_description_mark_down,
+        create_time,
+        update_time
+        ) VALUES(#{courseName},#{brief},#{previewFirstField},#{previewSecondField},#{courseImgUrl},
+        #{courseListImg},#{sortNum},#{price},#{discounts},#{sales},#{discountsTag},#{courseDescriptionMarkDown},
+        #{createTime},#{updateTime});
+        <!--返回查询的值（id），赋值给传入的对应类变量，set和赋值操作，且忽略大小写，mybatis一般都是如此-->
+        <selectKey resultType="int" order="AFTER" keyProperty="id">
+            select last_insert_id()
+        </selectKey>
+    </insert>
+
+    <!--新增讲师信息-->
+    <insert id="saveTeacher" parameterType="Teacher">
+        INSERT INTO teacher(course_id,
+                            teacher_name,
+                            position,
+                            description,
+                            create_time,
+                            update_time,
+                            is_del)
+        VALUES (#{courseId}, #{teacherName}, #{position}, #{description}, #{createTime}, #{updateTime}, #{isDel});
+
+    </insert>
+
+    <!--回显课程信息 public CourseVo findCourseById(Integer id)-->
+
+    <select id="findCourseById" parameterType="int" resultType="CourseVo">
+        SELECT c.*,
+               t.teacher_name,
+               t.position,
+               t.description
+        FROM course c
+                 LEFT JOIN teacher t
+                           ON c.id = t.id
+        WHERE c.id = #{id}
+    </select>
+
+    <!--更新课程信息-->
+    <update id="updateCourse" parameterType="Course">
+        <!--
+        trim用来操作对应的sql代码的添加和删除，其中prefix表示添加这个sql后，再添加内部的sql
+        而suffixOverrides表示当内部的sql执行完毕后，将最后的逗号去掉（若最后一个数是逗号则去掉，若不是则当然不去掉，即不操作）
+        -->
+        update course
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="courseName != null and courseName != ''">
+                course_name = #{courseName},
+            </if>
+            <if test="brief != null and brief != ''">
+                brief=#{brief},
+            </if>
+            <if test="previewFirstField != null and previewFirstField != ''">
+                preview_first_field=#{previewFirstField},
+            </if>
+            <if test="previewSecondField != null and previewSecondField != ''">
+                preview_second_field=#{previewSecondField},
+            </if>
+            <if test="courseImgUrl != null and courseImgUrl != ''">
+                course_img_url=#{courseImgUrl},
+            </if>
+            <if test="courseListImg != null and courseListImg != ''">
+                course_list_img=#{courseListImg},
+            </if>
+            <if test="sortNum != null and sortNum != ''">
+                sort_num=#{sortNum},
+            </if>
+            <if test="price != null and price != ''">
+                price=#{price},
+            </if>
+            <if test="discounts != null and discounts != ''">
+                discounts=#{discounts},
+            </if>
+            <if test="sales != null and sales != '' or sales==0">
+                sales=#{sales},
+            </if>
+            <if test="discountsTag != null and discountsTag != ''">
+                discounts_tag=#{discountsTag},
+            </if>
+            <if test="courseDescriptionMarkDown != null and
+            courseDescriptionMarkDown != ''">
+                course_description_mark_down=#{courseDescriptionMarkDown},
+            </if>
+            <if test="updateTime != null">
+                update_time=#{updateTime},
+            </if>
+        </trim>
+        <where>
+            <if test="id!=null and id != '' ">id=#{id}</if>
+        </where>
+
+    </update>
+
+    <!--更新讲师信息-->
+    <update id="updateTeacher" parameterType="Teacher">
+        update teacher
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="teacherName != null and teacherName != ''">
+                teacher_name = #{teacherName},
+            </if>
+            <if test="position != null and position != ''">
+                position = #{position},
+            </if>
+            <if test="description != null and description != ''">
+                description = #{description},
+            </if>
+            <if test="updateTime != null">
+                update_time=#{updateTime}
+                <!--这后面不加,是因为这是最后判断的，所以可以不加-->
+            </if>
+        </trim>
+        <where>
+            <if test="courseId != null and courseId != '' ">course_id = #{courseId}</if>
+        </where>
+    </update>
+
+    <!--课程状态管理-->
+    <update id="updateCourseStatus" parameterType="Course">
+        update course
+        set status=#{status},
+            update_time=#{updateTime}
+        where id = #{id}
+    </update>
+</mapper>

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.lagou.dao.CourseContentMapper">
+
+
+    <resultMap id="SectionAndLessonResultMap" type="CourseSection">
+        <id property="id" column="id"/>
+        <result property="courseId" column="course_id"/>
+        <result property="sectionName" column="section_name"/>
+        <result property="description" column="description"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="isDe" column="is_del"/>
+        <result property="orderNum" column="order_num"/>
+        <result property="status" column="status"/>
+        <collection property="lessonList" ofType="CourseLesson">
+
+            <id property="id" column="lessonId"/>
+            <result property="courseId" column="course_id"/>
+            <result property="sectionId" column="section_id"/>
+            <result property="theme" column="theme"/>
+            <result property="duration" column="duration"/>
+            <result property="isFree" column="is_free"/>
+            <result property="orderNum" column="order_numl"/>
+            <result property="status" column="statusl"/>
+
+        </collection>
+
+    </resultMap>
+
+
+    <!--根据课程id查询章节信息和课时信息-->
+    <select id="findSectionAndLessonByCourseId" resultMap="SectionAndLessonResultMap">
+        SELECT
+        cs.*,
+        <!--起别名，使得映射时，会使用正确的值，而不是左边的对应值
+        如当没有设置这个时，id有两个，那么优先使用左边的
+        -->
+        cl.id lessonid,
+        cl.course_id,
+        cl.section_id,
+        cl.theme,
+        cl.duration,
+        cl.create_time,
+        cl.update_time,
+        cl.is_del,
+        cl.order_num order_numl,
+        cl.status statusl
+        FROM
+        course_section cs
+        LEFT JOIN course_lesson cl
+        ON cs.id = cl.section_id
+        WHERE cs.course_id = #{id}
+        ORDER BY cs.order_num  <!--排序，使得根据排序来显示先后-->
+    </select>
+
+
+    <!--回显课程信息-->
+    <select id="findCourseByCourseId" parameterType="int" resultType="Course">
+        select id, course_name
+        from course
+        where id = #{id}
+    </select>
+
+    <!--新建章节信息-->
+    <insert id="saveSection" parameterType="CourseSection">
+    INSERT INTO course_section(
+         course_id,
+         section_name,
+         description,
+         order_num,
+         STATUS,
+         create_time,
+         update_time
+       )VALUES(#{courseId},#{sectionName},#{description},#{orderNum},
+       #{status},#{createTime},#{updateTime})
+    </insert>
+    <!--有时候添加数据，未必一定要所有数据添加-->
+
+    <!-- 更新章节信息-->
+    <update id="updateSection" parameterType="CourseSection">
+        UPDATE course_section
+           <trim prefix="SET" suffixOverrides=",">
+             <if test="sectionName != null and sectionName != ''">
+               section_name = #{sectionName},
+             </if>
+             <if test="description != null and description != ''">
+               description = #{description},
+             </if>
+             <if test="orderNum != null and orderNum != '' or orderNum == 0">
+               order_num = #{orderNum},
+             </if>
+             <if test="updateTime != null">
+               update_time=#{updateTime}
+             </if>
+           </trim>
+           <where>
+             <if test="id != null and id != '' ">id = #{id}</if>
+           </where>
+    </update>
+
+    <!--修改章节状态-->
+    <update id="updateSectionStatus" parameterType="CourseSection">
+        UPDATE course_section set
+                                  status = #{status},
+                                  update_time = #{updateTime}
+        WHERE id = #{id}
+
+    </update>
+    <!--
+    上面对应的大小WHERE（或者其他的大写）实际上是sql可视化界面测试的代码时
+    自动大写的，而直接写在这里的是对应小写，当然大小写是忽略的
+    -->
+
+    <!--添加课时信息-->
+    <insert id="saveLesson" parameterType="CourseLesson">
+        INSERT INTO course_lesson (
+            course_id,
+            section_id,
+            theme,
+            duration,
+            is_free,
+            order_num,
+            create_time,
+            update_time
+        )VALUES(#{courseId},#{sectionId},#{theme},#{duration},#{isFree},
+                #{orderNum},#{createTime},#{updateTime});
+
+    </insert>
+    <!--修改课时信息-->
+    <update id="updateLesson" parameterType="CourseLesson">
+        UPDATE course_lesson
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="theme != null and theme != ''">
+                theme = #{theme},
+            </if>
+            <if test="duration != null and duration != ''">
+                duration = #{duration},
+            </if>
+            <if test="isFree != null and isFree != ''">
+                is_free = #{isFree},
+            </if>
+            <if test="orderNum != null and orderNum != '' or orderNum == 0">
+                order_num = #{orderNum},
+            </if>
+            <if test="updateTime != null">
+                update_time=#{updateTime}
+            </if>
+        </trim>
+        <where>
+            <if test="id != null and id != '' ">id = #{id}</if>
+        </where>
+    </update>
+
+    <!--修改课时状态-->
+    <update id="updateLessonStatus" parameterType="CourseLesson">
+        UPDATE course_lesson set
+                                  status = #{status},
+                                  update_time = #{updateTime}
+        WHERE id = #{id}
+
+    </update>
+</mapper>

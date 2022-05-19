@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.lagou.dao.PromotionSpaceMapper">
+
+    <!--查询所有广告位-->
+    <select id="findAllPromotionSpace" resultType="PromotionSpace">
+        select *
+        from promotion_space
+    </select>
+
+    <!--添加广告位-->
+    <insert id="savePromotionSpace" parameterType="PromotionSpace">
+        insert into promotion_space values(null, #{name}, #{spaceKey},
+        #{createTime}, #{updateTime}, #{isDel})
+
+        <!--
+        这里说明一下：对应替换，是使用get方法，若没有get方法则直接赋值
+        且无论是get后面名称还是直接赋值，首字母大小写忽略
+        -->
+    </insert>
+
+    <!--根据id查询广告位信息-->
+    <select id="findPromotionSpaceById" parameterType="int" resultType="PromotionSpace">
+        select id,name
+        from promotion_space where id = #{id}
+    </select>
+    <!--修改广告位-->
+    <update id="updatePromotionSpace" parameterType="PromotionSpace">
+            update promotion_space set name = #{name},updateTime = #{updateTime} where id = #{id}
+    </update>
+</mapper>
