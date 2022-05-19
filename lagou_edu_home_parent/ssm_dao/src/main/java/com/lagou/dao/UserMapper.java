@@ -57,4 +57,12 @@ public interface UserMapper {
 
      public List<Resource> findResponseByRole(List<Integer> ids);
 
+     public void text1();
+     public void text2();
+     public void text3();
+     public void text4();
+     public void text5();
+     public void text6();
+     public void text7();
+     public void text8();
 }
