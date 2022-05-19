@@ -55,5 +55,9 @@ public interface UserMapper {
      */
     public List<Resource> findResponseByRoleId(List<Integer> ids);
 
+    /*
+    获取用户拥有的资源信息（实际上就是获取角色拥有的资源信息，但因为关联，所以也可说明是用户拥有）
+     */
+    public List<Resource> findResponseByRoleI(List<Integer> id);
 
 }
